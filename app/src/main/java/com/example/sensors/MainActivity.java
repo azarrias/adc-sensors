@@ -4,13 +4,10 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +24,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.activity_main);
         LinearLayout root = findViewById(R.id.root);
         SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_ALL);
+        sensors = sensorManager.getSensorList(Sensor.TYPE_ALL);
         textViews = new ArrayList<>();
         for (Sensor sensor : sensors) {
             TextView nameTextView = new TextView(this);
@@ -36,6 +33,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             LinearLayout sensorLinearLayout = new LinearLayout(this);
             root.addView(sensorLinearLayout);
             TextView[] sensorValuesTextViews = new TextView[MAX_SENSOR_VALUES];
+            textViews.add(sensorValuesTextViews);
             for (int i = 0; i < MAX_SENSOR_VALUES; i++) {
                 sensorValuesTextViews[i] = new TextView(this);
                 sensorValuesTextViews[i].setText("?");
@@ -59,7 +57,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        
+        synchronized (this) {
+            int n = 0;
+            for (Sensor sensor : sensors) {
+                if (event.sensor == sensor) {
+                    for (int i = 0; i < event.values.length && i < MAX_SENSOR_VALUES; i++) {
+                        textViews.get(n)[i].setText(Float.toString(event.values[i]));
+                    }
+                }
+                n++;
+            }
+        }
     }
 
     @Override
